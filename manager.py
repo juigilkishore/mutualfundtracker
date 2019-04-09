@@ -133,8 +133,22 @@ class Portfolio(object):
         appreciaton = round(current_value[0] - self.get_invested_value(scheme_id=scheme_id, folio=folio), 2)
         return appreciaton, current_value[-1]
 
-    def get_xirr(self, scheme_id=None, folio=None):
-        pass
+    @staticmethod
+    def _date_dt_obj(date):
+        (dd, mm, yyyy) = date.split('-')
+        return datetime(int(yyyy), int(mm), int(dd))
+
+    def get_cagr(self, scheme_id, folio):
+        current_value, current_date = self.get_current_value(scheme_id=scheme_id, folio=folio)
+        invested_value = self.get_invested_value(scheme_id=scheme_id, folio=folio)
+        _k = "{scheme_id}::{folio}".format(scheme_id=scheme_id, folio=folio)
+        date_purchase = self._portfolio_details[_k].date_purchase
+
+        holding_period_obj = self._date_dt_obj(current_date) - self._date_dt_obj(date_purchase)
+        holding_period_years = holding_period_obj.days / 365.0
+
+        raise Exception("NOT IMPLEMENTED")
+        # return round((((current_value/invested_value)**(1/holding_period_years)) - 1) * 100.0, 2)
 
     def list_all_schemes(self):
         scheme_details_list = []
@@ -146,6 +160,7 @@ class Portfolio(object):
         investment = self.get_invested_value(scheme_id=scheme_id, folio=folio)
         market_value = self.get_current_value(scheme_id=scheme_id, folio=folio)
         appreciation = self.get_appreciated_value(scheme_id=scheme_id, folio=folio)
+        interest_rate = round(((appreciation[0]/investment) * 100.0), 2)
         scheme_id_list_full = []
         folio_id_list_full = []
         folio_id_list_partial = []
@@ -167,5 +182,6 @@ class Portfolio(object):
             folio_id_list = folio_id_list_full
 
         return_json = {"total_investment": investment, "market_value": market_value[0], "date": market_value[1],
-                       "appreciation": appreciation[0], "scheme_ids": scheme_id_list, "folios": folio_id_list}
+                       "appreciation": appreciation[0], "scheme_ids": scheme_id_list, "folios": folio_id_list,
+                       "interest_rate_percent": interest_rate}
         return return_json

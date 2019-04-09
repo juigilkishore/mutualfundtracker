@@ -1,0 +1,7 @@
+lumpsum.yml
+venv
+venv/*
+.idea
+.idea/*
+__pycache__
+__pycache__/*

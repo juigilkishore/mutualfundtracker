@@ -1,3 +1,4 @@
+import os
 import yaml
 
 import mapper
@@ -6,7 +7,13 @@ import manager
 
 # load the funds from the lumpsum.yml
 
-with open('lumpsum.yml.sample', 'r') as fyml:
+if os.path.exists('lumpsum.yml'):
+    lumpsum_yml = 'lumpsum.yml'
+else:
+    print("Update lumpsum.yml as per your investment. Using lumpsum.yml.sample")
+    lumpsum_yml = 'lumpsum.yml.sample'
+
+with open(lumpsum_yml, 'r') as fyml:
     fund_config = yaml.load(fyml, Loader=yaml.FullLoader)
 
 INVESTMENTS = []
@@ -21,3 +28,5 @@ for fund_house_id, fund_scheme_list in fund_config.items():
         INVESTMENTS.append(scheme)
 
 portfolio = manager.Portfolio(INVESTMENTS)
+
+print(portfolio.get_investment_json("ABSLTAXRELIEF96", "WWW"))
