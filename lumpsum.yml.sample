@@ -1,0 +1,29 @@
+# "ICICIBLUECHIP_DG" - "ICICI Prudential Bluechip Fund Direct Plan Growth"
+# "ICICIBANKPSU_DG"  - "ICICI Prudential Banking and PSU Debt Fund Direct Plan Growth"
+# "SBIDYNBND_DG"  - "SBI Dynamic Bond Direct Plan Growth"
+# "ABSLTAXRELIEF96"  - "Aditya Birla Tax Relief 96 ELSS Direct Plan Growth"
+
+---
+
+ICICI:
+  - ICICIBLUECHIP_DG:
+      date_of_purchase: "26-03-2019"
+      units: "750"
+      folio: "ABC"
+
+  - ICICIBANKPSU_DG:
+      date_of_purchase: "25-05-2018"
+      units: "500"
+      folio: "ABC"
+
+SBI:
+  - SBIDYNBND_DG:
+      date_of_purchase: "31-05-2017"
+      units: "2500"
+      folio: "XYZ"
+
+ABSL:
+  - ABSLTAXRELIEF96:
+      date_of_purchase: "07-01-2019"
+      units: "1000"
+      folio: "WWW"
