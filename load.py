@@ -28,5 +28,3 @@ for fund_house_id, fund_scheme_list in fund_config.items():
         INVESTMENTS.append(scheme)
 
 portfolio = manager.Portfolio(INVESTMENTS)
-
-print(portfolio.get_investment_json("ABSLTAXRELIEF96", "WWW"))

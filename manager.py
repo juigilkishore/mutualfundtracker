@@ -1,5 +1,6 @@
 from datetime import datetime
 import requests
+from uuid import uuid1
 
 
 class MutualFundAPI(object):
@@ -50,6 +51,7 @@ class MutualFund(Scheme):
         self.folio_number = kwargs.pop('folio')
         super().__init__(**kwargs)
         self._invested_value = None
+        self.mf_uuid = str(uuid1()).split('-')[0]
         self._set_invested_value()
 
     def get_invested_value(self):
@@ -83,7 +85,8 @@ class Portfolio(object):
     def _calculate_invested_value(self):
         for mf in self.mf_list:
             mf_invested = mf.get_invested_value()
-            _k = "{scheme_id}::{folio}".format(scheme_id=mf.scheme_id, folio=mf.folio_number)
+            _k = "{scheme_id}::{mf_uuid}::{folio}".format(
+                scheme_id=mf.scheme_id, mf_uuid=mf.mf_uuid, folio=mf.folio_number)
             self._portfolio_details[_k] = mf
             self._portfolio_invested_value[_k] = round(mf_invested, 2)
             self._portfolio_key_list.append(_k)
@@ -95,13 +98,13 @@ class Portfolio(object):
         return self.get_current_value()
 
     def get_invested_value(self, scheme_id=None, folio=None):
-        # TODO: Add validation for scheme_id
+        # TODO: Add validation for scheme_id and folio
         if scheme_id and folio:
-            scheme_list = ["{scheme_id}::{folio}".format(scheme_id=scheme_id, folio=folio)]
-            if scheme_list[0] not in self._portfolio_key_list:
-                raise Exception("Invalid Folio {0} provided".format(folio))
-        elif scheme_id:
+            scheme_list = [k for k in self._portfolio_key_list if k.startswith(scheme_id) and k.endswith(folio)]
+        elif scheme_id and not folio:
             scheme_list = [k for k in self._portfolio_key_list if k.startswith(scheme_id)]
+        elif not scheme_id and folio:
+            scheme_list = [k for k in self._portfolio_key_list if k.endswith(folio)]
         else:
             scheme_list = self._portfolio_key_list
         total = 0.0
@@ -110,14 +113,14 @@ class Portfolio(object):
         return total
 
     def get_current_value(self, scheme_id=None, folio=None):
-        # TODO: Add validation for scheme_id
+        # TODO: Add validation for scheme_id and folio
         nav_current = {'nav': None, 'date': datetime.today().strftime("%d-%m-%Y")}
         if scheme_id and folio:
-            scheme_list = ["{scheme_id}::{folio}".format(scheme_id=scheme_id, folio=folio)]
-            if scheme_list[0] not in self._portfolio_key_list:
-                raise Exception("Invalid Folio {0} provided".format(folio))
-        elif scheme_id:
+            scheme_list = [k for k in self._portfolio_key_list if k.startswith(scheme_id) and k.endswith(folio)]
+        elif scheme_id and not folio:
             scheme_list = [k for k in self._portfolio_key_list if k.startswith(scheme_id)]
+        elif not scheme_id and folio:
+            scheme_list = [k for k in self._portfolio_key_list if k.endswith(folio)]
         else:
             scheme_list = self._portfolio_key_list
         total = 0.0
@@ -129,16 +132,16 @@ class Portfolio(object):
         return round(total, 2), nav_current['date']
 
     def get_appreciated_value(self, scheme_id=None, folio=None):
-        current_value = self.get_current_value(scheme_id=scheme_id, folio=folio)
-        appreciaton = round(current_value[0] - self.get_invested_value(scheme_id=scheme_id, folio=folio), 2)
-        return appreciaton, current_value[-1]
+        current_value, current_value_on = self.get_current_value(scheme_id=scheme_id, folio=folio)
+        appreciation = round(current_value - self.get_invested_value(scheme_id=scheme_id, folio=folio), 2)
+        return appreciation, current_value_on
 
     @staticmethod
     def _date_dt_obj(date):
         (dd, mm, yyyy) = date.split('-')
         return datetime(int(yyyy), int(mm), int(dd))
 
-    def get_cagr(self, scheme_id, folio):
+    def _get_cagr(self, scheme_id, folio):
         current_value, current_date = self.get_current_value(scheme_id=scheme_id, folio=folio)
         invested_value = self.get_invested_value(scheme_id=scheme_id, folio=folio)
         _k = "{scheme_id}::{folio}".format(scheme_id=scheme_id, folio=folio)
@@ -150,38 +153,38 @@ class Portfolio(object):
         raise Exception("NOT IMPLEMENTED")
         # return round((((current_value/invested_value)**(1/holding_period_years)) - 1) * 100.0, 2)
 
-    def list_all_schemes(self):
+    def list_all_schemes(self, scheme_id=None, folio=None):
         scheme_details_list = []
         for mf in self.mf_list:
-            scheme_details_list.append(mf.get_mf_details_json())
+            mf_details = mf.get_mf_details_json()
+            if scheme_id and folio:
+                if scheme_id == list(mf_details.keys())[0] and folio == list(mf_details.values())[0]['folio_number']:
+                    scheme_details_list.append(mf_details)
+            elif scheme_id and not folio:
+                if scheme_id == list(mf_details.keys())[0]:
+                    scheme_details_list.append(mf_details)
+            elif not scheme_id and folio:
+                if folio == list(mf_details.values())[0]['folio_number']:
+                    scheme_details_list.append(mf_details)
+            else:
+                scheme_details_list.append(mf_details)
         return scheme_details_list
 
     def get_investment_json(self, scheme_id=None, folio=None):
         investment = self.get_invested_value(scheme_id=scheme_id, folio=folio)
-        market_value = self.get_current_value(scheme_id=scheme_id, folio=folio)
-        appreciation = self.get_appreciated_value(scheme_id=scheme_id, folio=folio)
-        interest_rate = round(((appreciation[0]/investment) * 100.0), 2)
-        scheme_id_list_full = []
-        folio_id_list_full = []
-        folio_id_list_partial = []
-        for mf_dict in self.list_all_schemes():
-            sid = list(mf_dict.keys())[0]
-            _folio = list(mf_dict.values())[0]['folio_number']
-            scheme_id_list_full.append(sid)
-            folio_id_list_full.append(_folio)
-            if scheme_id == sid and not folio:
-                folio_id_list_partial.append(_folio)
-        if scheme_id and folio:
-            scheme_id_list = [scheme_id]
-            folio_id_list = [folio]
-        elif scheme_id:
-            scheme_id_list = [scheme_id]
-            folio_id_list = folio_id_list_partial
-        else:
-            scheme_id_list = scheme_id_list_full
-            folio_id_list = folio_id_list_full
+        market_value, market_value_on = self.get_current_value(scheme_id=scheme_id, folio=folio)
+        appreciation, _ = self.get_appreciated_value(scheme_id=scheme_id, folio=folio)
+        interest = round(((appreciation/investment) * 100.0), 2)
 
-        return_json = {"total_investment": investment, "market_value": market_value[0], "date": market_value[1],
-                       "appreciation": appreciation[0], "scheme_ids": scheme_id_list, "folios": folio_id_list,
-                       "interest_rate_percent": interest_rate}
+        meta_data = self.list_all_schemes(scheme_id=scheme_id, folio=folio)
+        x_meta_data = []
+        for mf_data in meta_data:
+            mf_scheme_id = list(mf_data.keys())[0]
+            mf_data[mf_scheme_id].pop('fund_house_id')
+            mf_data[mf_scheme_id].pop('fund_house_name')
+            x_meta_data.append(mf_data)
+
+        return_json = {"net_investment": investment, "market_value": market_value,
+                       "appreciation": appreciation, "x_meta_data": x_meta_data,
+                       "interest_percent": interest, "market_value_on": market_value_on}
         return return_json

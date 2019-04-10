@@ -13,27 +13,26 @@ app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 @app.route('/')
 def display_help():
     help_txt = OrderedDict()
+    help_txt["http://localhost:5000/schemes/"] = "list the investment schemes"
     help_txt["http://localhost:5000/investments/"] = "display the net investments"
-    help_txt["http://localhost:5000/investments?list=1"] = "list the invested schemes"
-    help_txt["http://localhost:5000/investments/SCHEME_ID/"] = "display the SCHEME_ID investments"
-    help_txt["http://localhost:5000/investments/SCHEME_ID?folio=FOLIO_NUM"] = \
-        "display the SCHEME_ID on FOLIO_NUM investment"
+    help_txt["http://localhost:5000/investments?scheme_id=SCHEME_ID"] = "display the SCHEME_ID investments"
+    help_txt["http://localhost:5000/investments?folio=FOLIO_NUM"] = "display the investments on FOLIO_NUM"
+    help_txt["http://localhost:5000/investments?scheme_id=SCHEME_ID&folio=FOLIO_NUM"] = \
+        "display the SCHEME_ID investments on FOLIO"
     return jsonify(help_txt)
 
 
 @app.route('/investments/')
-def get_all_investments():
-    if queryflask.args.get('list'):
-        ret_val = portfolio.list_all_schemes()
-    else:
-        ret_val = portfolio.get_investment_json()
+def get_investments():
+    scheme_id = queryflask.args.get('scheme_id')
+    folio = queryflask.args.get('folio')
+    ret_val = portfolio.get_investment_json(scheme_id=scheme_id, folio=folio)
     return jsonify(ret_val)
 
 
-@app.route('/investments/<scheme_id>/')
-def get_investments(scheme_id):
-    folio = queryflask.args.get('folio')
-    ret_val = portfolio.get_investment_json(scheme_id=scheme_id, folio=folio)
+@app.route('/schemes/')
+def list_investments():
+    ret_val = portfolio.list_all_schemes()
     return jsonify(ret_val)
 
 

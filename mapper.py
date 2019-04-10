@@ -38,6 +38,18 @@ absl_tax_relief = ("ABSLTAXRELIEF96", "Aditya Birla Sun Life Tax Relief 96 Growt
 mapping["ABSL"] = {"fund_house_name": "Aditya Birla Sun Life Mutual Fund",
                    "schemes": [dict(zip(scheme_keys, absl_tax_relief))]}
 
+mirae_india_equity = ("MIRAEINDEQUITY_DG", "Mirae Asset India Equity Fund - Direct Plan - Growth",
+                      "https://api.mfapi.in/mf/118825")
+
+mapping["MIRAE"] = {"fund_house_name": "Mirae Asset Mutual Fund",
+                    "schemes": [dict(zip(scheme_keys, mirae_india_equity))]}
+
+uti_bond = ("UTIBND_DG", "UTI Bond Fund-Growth - Direct", "https://api.mfapi.in/mf/120689")
+uti_gilt = ("UTIGILT_DG", "UTI - GILT FUND - Direct Plan - Growth Option", "https://api.mfapi.in/mf/120792")
+
+mapping["UTI"] = {"fund_house_name": "UTI Mutual Fund",
+                  "schemes": [dict(zip(scheme_keys, uti_bond)), dict(zip(scheme_keys, uti_gilt))]}
+
 
 def get_scheme_details(fid, sid):
     fund_details = mapping.get(fid)
@@ -53,4 +65,3 @@ def get_scheme_details(fid, sid):
     scheme_details = {'fund_house_id': fid, 'fund_house_name': fname,
                       'scheme_id': sid, 'scheme_name': sname, 'scheme_api': mfapi}
     return scheme_details
-
