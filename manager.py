@@ -46,13 +46,13 @@ class MutualFund(Scheme):
     """"""
 
     def __init__(self, **kwargs):
-        self.num_units = kwargs.pop('units')
+        self._invested_value = round(float(kwargs.pop('amount')), 2)
         self.date_purchase = kwargs.pop('date_of_purchase')
         self.folio_number = kwargs.pop('folio')
         super().__init__(**kwargs)
-        self._invested_value = None
+        self.num_units = "0"
         self.mf_uuid = str(uuid1()).split('-')[0]
-        self._set_invested_value()
+        self._set_num_of_units()
 
     def get_invested_value(self):
         return self._invested_value
@@ -64,16 +64,14 @@ class MutualFund(Scheme):
         }
         return mf_details_json
 
-    def _set_invested_value(self):
+    def _set_num_of_units(self):
         mf_api = MutualFundAPI(self.mf_api)
         nav_on_investment = mf_api.get_nav(self.date_purchase)
-        self._invested_value = float(nav_on_investment['nav']) * float(self.num_units)
-        self._invested_value = round(self._invested_value, 2)
+        self.num_units = round(float(self._invested_value) / float(nav_on_investment['nav']), 3)
 
 
 class Portfolio(object):
     """"""
-
     def __init__(self, *mf_list):
         self.num_investments = len(mf_list)
         self.mf_list = mf_list[0]
@@ -183,6 +181,29 @@ class Portfolio(object):
             mf_data[mf_scheme_id].pop('fund_house_id')
             mf_data[mf_scheme_id].pop('fund_house_name')
             x_meta_data.append(mf_data)
+
+        return_json = {"net_investment": investment, "market_value": market_value,
+                       "appreciation": appreciation, "x_meta_data": x_meta_data,
+                       "interest_percent": interest, "market_value_on": market_value_on}
+        return return_json
+
+    @staticmethod
+    def merge_investment_json(result_json_list):
+        net_investment_list = []
+        market_value_list = []
+        appreciation_list = []
+        x_meta_data = []
+        for result in result_json_list:
+            net_investment_list.append(result.get('net_investment'))
+            market_value_list.append(result.get('market_value'))
+            appreciation_list.append(result.get('appreciation'))
+            x_meta_data.extend(result.get('x_meta_data'))
+        market_value_on = result_json_list[0].get('market_value_on')
+
+        investment = sum(net_investment_list)
+        market_value = sum(market_value_list)
+        appreciation = sum(appreciation_list)
+        interest = round(((appreciation/investment) * 100.0), 2)
 
         return_json = {"net_investment": investment, "market_value": market_value,
                        "appreciation": appreciation, "x_meta_data": x_meta_data,

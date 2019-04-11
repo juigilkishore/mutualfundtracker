@@ -16,9 +16,11 @@ else:
 with open(lumpsum_yml, 'r') as fyml:
     fund_config = yaml.load(fyml, Loader=yaml.FullLoader)
 
+FUNDHOUSEID_SCHEMEID_MAP = {}
 INVESTMENTS = []
 
 for fund_house_id, fund_scheme_list in fund_config.items():
+    scheme_id_list = []
     for scheme_info in fund_scheme_list:
         scheme_id = list(scheme_info.keys())[0]
         scheme_details_yaml = scheme_info[scheme_id]
@@ -26,5 +28,7 @@ for fund_house_id, fund_scheme_list in fund_config.items():
         scheme_details = {**scheme_details_yaml, **scheme_details_api}
         scheme = manager.MutualFund(**scheme_details)
         INVESTMENTS.append(scheme)
+        scheme_id_list.append(scheme_id)
+    FUNDHOUSEID_SCHEMEID_MAP[fund_house_id] = list(set(scheme_id_list))
 
 portfolio = manager.Portfolio(INVESTMENTS)

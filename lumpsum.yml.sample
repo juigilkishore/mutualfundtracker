@@ -2,28 +2,51 @@
 # "ICICIBANKPSU_DG"  - "ICICI Prudential Banking and PSU Debt Fund Direct Plan Growth"
 # "SBIDYNBND_DG"  - "SBI Dynamic Bond Direct Plan Growth"
 # "ABSLTAXRELIEF96"  - "Aditya Birla Tax Relief 96 ELSS Direct Plan Growth"
+# "UTIBND_DG" - "UTI Bond Fund-Growth - Direct"
+# "UTIGILT_DG" - "UTI - GILT FUND - Direct Plan - Growth Option"
+# "MIRAEINDEQUITY_DG" - "Mirae Asset India Equity Fund - Direct Plan - Growth"
 
 ---
 
 ICICI:
   - ICICIBLUECHIP_DG:
       date_of_purchase: "26-03-2019"
-      units: "750"
+      amount: "5000"
       folio: "ABC"
 
   - ICICIBANKPSU_DG:
       date_of_purchase: "25-05-2018"
-      units: "500"
+      amount: "15000"
       folio: "ABC"
 
 SBI:
   - SBIDYNBND_DG:
       date_of_purchase: "31-05-2017"
-      units: "2500"
+      amount: "25000"
       folio: "XYZ"
 
 ABSL:
   - ABSLTAXRELIEF96:
       date_of_purchase: "07-01-2019"
-      units: "1000"
+      amount: "25000"
       folio: "WWW"
+
+UTI:
+  - UTIBND_DG:
+      date_of_purchase: "11-05-2017"
+      amount: "10000"
+      folio: "utifolio"
+  - UTIBND_DG:
+      date_of_purchase: "19-05-2017"
+      amount: "20000"
+      folio: "utifolio"
+  - UTIGILT_DG:
+      date_of_purchase: "17-05-2017"
+      amount: "30000"
+      folio: "utifolio"
+
+MIRAE:
+  - MIRAEINDEQUITY_DG:
+      date_of_purchase: "03-04-2019"
+      amount: "50000"
+      folio: "foliomirae"

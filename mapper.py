@@ -13,6 +13,7 @@ _ = {"<FUND_CODE>": {
 
 
 mapping = {}
+map_short = {}
 
 scheme_keys = ("scheme_code", "scheme_name", "mf_api")
 
@@ -24,6 +25,7 @@ icici_bank_psu = ("ICICIBANKPSU_DG", "ICICI Prudential Banking and PSU Debt Fund
 mapping["ICICI"] = {"fund_house_name": "ICICI Prudential Mutual Fund",
                     "schemes": [dict(zip(scheme_keys, icici_bluechip)), dict(zip(scheme_keys, icici_bank_psu))]
                     }
+map_short["ICICI"] = [icici_bluechip[0], icici_bank_psu[0]]
 
 sbi_dynamic_bond = ("SBIDYNBND_DG", "SBI Dynamic Bond Fund - DIRECT PLAN - Growth",
                     "https://api.mfapi.in/mf/119671")
@@ -31,24 +33,28 @@ sbi_dynamic_bond = ("SBIDYNBND_DG", "SBI Dynamic Bond Fund - DIRECT PLAN - Growt
 mapping["SBI"] = {"fund_house_name": "SBI Mutual Fund",
                   "schemes": [dict(zip(scheme_keys, sbi_dynamic_bond))]
                   }
+map_short["SBI"] = [sbi_dynamic_bond[0]]
 
 absl_tax_relief = ("ABSLTAXRELIEF96", "Aditya Birla Sun Life Tax Relief 96 Growth Direct Plan",
                    "https://api.mfapi.in/mf/119544")
 
 mapping["ABSL"] = {"fund_house_name": "Aditya Birla Sun Life Mutual Fund",
                    "schemes": [dict(zip(scheme_keys, absl_tax_relief))]}
+map_short["ABSL"] = [absl_tax_relief[0]]
 
 mirae_india_equity = ("MIRAEINDEQUITY_DG", "Mirae Asset India Equity Fund - Direct Plan - Growth",
                       "https://api.mfapi.in/mf/118825")
 
 mapping["MIRAE"] = {"fund_house_name": "Mirae Asset Mutual Fund",
                     "schemes": [dict(zip(scheme_keys, mirae_india_equity))]}
+map_short["MIRAE"] = [mirae_india_equity[0]]
 
 uti_bond = ("UTIBND_DG", "UTI Bond Fund-Growth - Direct", "https://api.mfapi.in/mf/120689")
 uti_gilt = ("UTIGILT_DG", "UTI - GILT FUND - Direct Plan - Growth Option", "https://api.mfapi.in/mf/120792")
 
 mapping["UTI"] = {"fund_house_name": "UTI Mutual Fund",
                   "schemes": [dict(zip(scheme_keys, uti_bond)), dict(zip(scheme_keys, uti_gilt))]}
+map_short["UTI"] = [uti_gilt[0], uti_bond[0]]
 
 
 def get_scheme_details(fid, sid):
@@ -65,3 +71,12 @@ def get_scheme_details(fid, sid):
     scheme_details = {'fund_house_id': fid, 'fund_house_name': fname,
                       'scheme_id': sid, 'scheme_name': sname, 'scheme_api': mfapi}
     return scheme_details
+
+
+def get_all_scheme_under_fund_house(fid):
+    fund_details = mapping.get(fid)
+    if not fund_details:
+        raise Exception("Fund unavailable")
+
+    schemes = [s.get("scheme_code") for s in fund_details.get("schemes")]
+    return schemes
