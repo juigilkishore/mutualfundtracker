@@ -1,6 +1,5 @@
 lumpsum.yml
 lumpsum.yml.original
-sip.yml
 venv
 venv/*
 .idea

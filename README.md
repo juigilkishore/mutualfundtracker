@@ -19,6 +19,5 @@ Ex:
 6.  "http://localhost:5000/schemes/": "list the investment schemes"
 
 TODO
-1. sip investments
-2. Estimate the market value
+1. Estimate the market value
 

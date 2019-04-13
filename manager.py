@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 from uuid import uuid1
 
@@ -22,6 +22,12 @@ class MutualFundAPI(object):
         for d in data['data']:
             if d['date'] == date:
                 return d
+
+        # in-case if the requested date in not available in the API, get the next one
+        dd, mm, yyyy = date.split("-")
+        dt_obj = datetime(int(yyyy), int(mm), int(dd))
+        next_date = dt_obj + timedelta(1)
+        return self.get_nav(next_date.strftime("%d-%m-%Y"))
 
 
 class FundHouse(object):
@@ -47,27 +53,64 @@ class MutualFund(Scheme):
 
     def __init__(self, **kwargs):
         self._invested_value = round(float(kwargs.pop('amount')), 2)
+        # __invested_value used in-case of SIP investments: it is the periodic invested amount
+        self.__invested_value = self._invested_value
         self.date_purchase = kwargs.pop('date_of_purchase')
         self.folio_number = kwargs.pop('folio')
         super().__init__(**kwargs)
-        self.num_units = "0"
         self.mf_uuid = str(uuid1()).split('-')[0]
-        self._set_num_of_units()
+        self.sip_frequency = kwargs.get('sip_frequency')
+        if self.sip_frequency:
+            self.investment_type = "sip"
+            self.track_sip_investments()
+        else:
+            self.investment_type = "lumpsum"
+            self.num_units = self._set_num_of_units(self._invested_value, self.date_purchase)
 
     def get_invested_value(self):
+        if self.investment_type == "sip":
+            self.track_sip_investments()
         return self._invested_value
 
     def get_mf_details_json(self):
         mf_details_json = {self.scheme_id: {
             "folio_number": self.folio_number, "date_of_purchase": self.date_purchase, "scheme_name": self.scheme_name,
-            "fund_house_id": self.fund_id, "fund_house_name": self.fund_name}
+            "fund_house_id": self.fund_id, "fund_house_name": self.fund_name, "investment_type": self.investment_type}
         }
+        if self.investment_type == "sip":
+            mf_details_json[self.scheme_id]["sip_frequency"] = self.sip_frequency
+            # mf_details_json[self.scheme_id]["amount_per_investment"] = self.__invested_value
         return mf_details_json
 
-    def _set_num_of_units(self):
+    def _set_num_of_units(self, invested_value, date_of_purchase):
         mf_api = MutualFundAPI(self.mf_api)
-        nav_on_investment = mf_api.get_nav(self.date_purchase)
-        self.num_units = round(float(self._invested_value) / float(nav_on_investment['nav']), 3)
+        nav_on_investment = mf_api.get_nav(date_of_purchase)
+        return round(float(invested_value) / float(nav_on_investment['nav']), 3)
+
+    def track_sip_investments(self):
+        if self.investment_type != "sip":
+            raise Exception("Invalid operation performed on investment type", self.investment_type)
+
+        total_num_units = float("0.0")
+        period_map = {"monthly": 30, "quarterly": 90, "halfyearly": 180}
+        dd, mm, yyyy = self.date_purchase.split("-")
+        next_dop = datetime(int(yyyy), int(mm), int(dd))
+        date_diff = datetime.today() - next_dop
+        num_investments = 0
+
+        while date_diff.days > 0:
+            investment_date = next_dop.strftime("%d-%m-%Y")
+            total_num_units = float(total_num_units) + float(self._set_num_of_units(
+                self.__invested_value, investment_date))
+            next_dop = next_dop + timedelta(period_map[self.sip_frequency])
+            if next_dop.weekday() >= 5:
+                next_dop = next_dop + timedelta(7 - next_dop.weekday())
+            date_diff = datetime.today() - next_dop
+            num_investments = num_investments + 1
+
+        self.num_units = total_num_units
+        self._invested_value = round(float(self.__invested_value) * float(num_investments), 2)
+        return {"num_investments": num_investments, "total_num_units": total_num_units}
 
 
 class Portfolio(object):
@@ -126,6 +169,8 @@ class Portfolio(object):
             mf = self._portfolio_details[_k]
             mf_api = MutualFundAPI(mf.mf_api)
             nav_current = mf_api.get_current_nav()
+            if mf.investment_type == "sip":
+                mf.track_sip_investments()
             total = total + float(nav_current['nav']) * float(mf.num_units)
         return round(total, 2), nav_current['date']
 
@@ -178,7 +223,6 @@ class Portfolio(object):
         x_meta_data = []
         for mf_data in meta_data:
             mf_scheme_id = list(mf_data.keys())[0]
-            mf_data[mf_scheme_id].pop('fund_house_id')
             mf_data[mf_scheme_id].pop('fund_house_name')
             x_meta_data.append(mf_data)
 
@@ -200,9 +244,9 @@ class Portfolio(object):
             x_meta_data.extend(result.get('x_meta_data'))
         market_value_on = result_json_list[0].get('market_value_on')
 
-        investment = sum(net_investment_list)
-        market_value = sum(market_value_list)
-        appreciation = sum(appreciation_list)
+        investment = round(sum(net_investment_list), 2)
+        market_value = round(sum(market_value_list), 2)
+        appreciation = round(sum(appreciation_list), 2)
         interest = round(((appreciation/investment) * 100.0), 2)
 
         return_json = {"net_investment": investment, "market_value": market_value,

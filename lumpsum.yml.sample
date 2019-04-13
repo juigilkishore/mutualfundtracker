@@ -6,6 +6,7 @@
 # "UTIGILT_DG" - "UTI - GILT FUND - Direct Plan - Growth Option"
 # "MIRAEINDEQUITY_DG" - "Mirae Asset India Equity Fund - Direct Plan - Growth"
 
+# sip_frequency - "monthly", "quarterly", "halfyearly"
 ---
 
 ICICI:
@@ -50,3 +51,8 @@ MIRAE:
       date_of_purchase: "03-04-2019"
       amount: "50000"
       folio: "foliomirae"
+  - MIRAEINDEQUITY_DG:
+      date_of_purchase: "03-04-2019"
+      amount: "5000"
+      folio: "foliomirae"
+      sip_frequency: "monthly"
